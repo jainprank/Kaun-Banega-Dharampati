@@ -16,10 +16,10 @@ Open `index.html` in a browser, or host the folder with GitHub Pages. No build s
 index.html          # the whole game (HTML + CSS + JS)
 audio/              # intro, how-to-play, correct, wrong (ding), tick
 images/title.jpg    # title card
-images/set1..set5/  # q{1-10}_{idle,correct,wrong}.jpg frames per set
+images/set1..set5/  # backdrop frames: q{1-10}_{idle,correct,wrong}.jpg
 ```
 
-The question bank is the `SETS` object near the top of the script in `index.html`: each set lists the correct answer for its 10 questions, and every set joins one pool. To add questions, add a set entry there and its image folder under `images/`.
+The question bank is the `QUESTIONS` array near the top of the script in `index.html`: each entry has the question, four options and the correct letter. Every game deals 10 at random. The live text is drawn over the frame images, which supply the backdrop only. Answer letters are balanced across A–D. To add a question, append an entry to `QUESTIONS`.
 
 ## Host with GitHub Pages
 Repo **Settings → Pages → Deploy from branch → `main` / root**.

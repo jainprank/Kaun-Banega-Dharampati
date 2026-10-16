@@ -4,7 +4,7 @@
 <meta name="description" content="Kaun Banega Dharampati — a Jain-philosophy KBC-style quiz. Five sets of ten questions, one Punya Ladder to climb.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Noto+Sans+Devanagari:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -343,6 +343,46 @@
   .set-btn b{display:block; font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(14px,2.2vw,18px)}
   .set-btn span{font-size:12px; color:var(--cream-dim)}
 
+  /* Live question text and options, drawn over the frame artwork that carries the old printed text */
+  .q-visual{position:absolute; inset:0; pointer-events:none}
+  .q-shape, .opt-visual{position:absolute; container-type:inline-size}
+  .q-shape{left:4.6%; top:64.1%; width:90.8%; height:12.8%}
+  .opt-visual{width:43.988%; height:8.38%}
+  .opt-visual[data-l="A"]{left:5.186%; top:78.415%}
+  .opt-visual[data-l="B"]{left:5.564%; top:88.908%}
+  .opt-visual[data-l="C"]{left:50.371%; top:78.557%}
+  .opt-visual[data-l="D"]{left:50.549%; top:88.795%}
+  .q-shape svg, .opt-visual svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible}
+  .q-poly, .opt-poly{fill:url(#pillFill); stroke:var(--gold); stroke-width:2.5; vector-effect:non-scaling-stroke; transition:fill .25s ease}
+  .opt-visual.tint-correct .opt-poly{fill:#2fae78}
+  .opt-visual.tint-wrong .opt-poly{fill:#d6374f}
+  .q-text, .opt-text{
+    position:absolute; display:flex; align-items:center;
+    font-family:'Noto Sans Devanagari','Kohinoor Devanagari',sans-serif; color:#fff; line-height:1.25;
+    text-shadow:0 1px 2px rgba(0,0,0,.45); overflow:hidden;
+  }
+  .q-text{inset:0 7% 0 7%; justify-content:center; text-align:center; font-weight:600; font-size:clamp(11px,3.6cqw,17px)}
+  .opt-letter{
+    position:absolute; left:2.5cqw; top:50%; transform:translateY(-50%);
+    width:clamp(18px,9cqw,30px); height:clamp(18px,9cqw,30px); box-sizing:border-box;
+    border:2px solid #fff; border-radius:50%; background:rgba(20,8,40,.6);
+    display:flex; align-items:center; justify-content:center;
+    font:700 clamp(10px,3.6cqw,15px) Poppins,sans-serif; color:#fff;
+  }
+  .opt-text{
+    left:calc(clamp(18px,9cqw,30px) + 7cqw); right:4cqw; top:0; bottom:0;
+    font-weight:500; font-size:clamp(10px,4.1cqw,16px);
+  }
+  .reveal{
+    position:absolute; left:24%; top:4%; width:52%; height:42%; box-sizing:border-box;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.5em;
+    padding:4%; container-type:inline-size; text-align:center;
+    background:linear-gradient(180deg, rgba(34,14,68,.97), rgba(18,6,40,.97));
+    border:2px solid var(--gold); border-radius:18px; box-shadow:0 0 22px rgba(255,212,71,.25);
+  }
+  .reveal-h{font-family:'Cinzel',serif; font-weight:700; color:#ffe9a3; font-size:clamp(12px,6cqw,26px); line-height:1.2}
+  .reveal-t{font-family:'Noto Sans Devanagari','Kohinoor Devanagari',sans-serif; font-weight:600; color:#fff; font-size:clamp(12px,5cqw,22px); line-height:1.3}
+
   [hidden]{display:none!important}
 </style>
 
@@ -354,6 +394,15 @@
 <div class="stage-wrap">
   <div class="frame" id="frame">
     <img class="bg" id="bgImg" src="images/title.jpg" alt="">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="pillFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a4fd0"/><stop offset=".5" stop-color="#6b2fb5"/><stop offset="1" stop-color="#4a1d8a"/></linearGradient></defs></svg>
+    <div class="q-visual" id="qVisual" hidden>
+      <div class="q-shape"><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><polygon class="q-poly" points="60,0 940,0 1000,50 940,100 60,100 0,50"/></svg><span class="q-text" id="qText"></span></div>
+      <div class="opt-visual" data-l="A"><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><polygon class="opt-poly" points="60,0 940,0 1000,50 940,100 60,100 0,50"/></svg><span class="opt-letter">A</span><span class="opt-text" id="tA"></span></div>
+      <div class="opt-visual" data-l="B"><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><polygon class="opt-poly" points="60,0 940,0 1000,50 940,100 60,100 0,50"/></svg><span class="opt-letter">B</span><span class="opt-text" id="tB"></span></div>
+      <div class="opt-visual" data-l="C"><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><polygon class="opt-poly" points="60,0 940,0 1000,50 940,100 60,100 0,50"/></svg><span class="opt-letter">C</span><span class="opt-text" id="tC"></span></div>
+      <div class="opt-visual" data-l="D"><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><polygon class="opt-poly" points="60,0 940,0 1000,50 940,100 60,100 0,50"/></svg><span class="opt-letter">D</span><span class="opt-text" id="tD"></span></div>
+    </div>
+    <div class="reveal" id="reveal" hidden><div class="reveal-h">Correct Answer</div><div class="reveal-t" id="revealText"></div></div>
 
     <div class="intro-dots" id="introDots" hidden></div>
     <div class="intro-spark" id="introSpark" hidden>✦</div>
@@ -429,20 +478,514 @@
 (function(){
   "use strict";
 
-  // Question bank: each set holds the answer keys for its 10 questions, and the
-  // images live in images/set<N>/ (q1..q10 x idle/correct/wrong). Every game deals
-  // DECK_SIZE questions at random from all sets together.
-  // To add questions, add a set here and its image folder.
-  var SETS = {
-    1: {correct:["A","B","C","D","A","B","C","D","A","B"]},
-    2: {correct:["B","D","C","D","B","A","D","C","A","B"]},
-    3: {correct:["B","C","D","A","B","C","D","A","B","C"]},
-    4: {correct:["C","D","A","B","C","D","A","B","C","D"]},
-    5: {correct:["D","A","B","C","D","B","A","D","B","C"]}
-  };
-  var BANK = [];
-  Object.keys(SETS).forEach(function(s){
-    SETS[s].correct.forEach(function(key, i){ BANK.push({ set: parseInt(s, 10), q: i + 1, key: key }); });
+  // Question bank: 50 questions from the source sheet. Every game deals DECK_SIZE of
+  // them at random. To add a question, append an entry here.
+  var QUESTIONS = [
+    {
+      "q": "द्रव्य की सबसे सटीक पहचान क्या है?",
+      "opts": [
+        "गुण और पर्याय वाला द्रव्य",
+        "केवल परिवर्तनशील पर्याय",
+        "केवल स्थायी गुण",
+        "केवल ज्ञान का आश्रय"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "अस्तिकाय शब्द में ‘काय’ किस ओर संकेत करता है?",
+      "opts": [
+        "एक ही प्रदेश",
+        "अनेक प्रदेशों में विस्तृति",
+        "केवल भौतिक शरीर",
+        "केवल समय की अवधि"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "जैन दर्शन में सत् का लक्षण क्या है?",
+      "opts": [
+        "उत्पाद, व्यय और ध्रौव्य",
+        "केवल उत्पत्ति",
+        "केवल ध्रौव्य",
+        "केवल विनाश"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "गुण की विशिष्टता क्या है?",
+      "opts": [
+        "क्षणिक और अस्थायी होना",
+        "केवल पुद्गल में होना",
+        "द्रव्य से पूर्णतः अलग होना",
+        "द्रव्य में निरंतर आश्रित रहना"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "पर्याय का प्रमुख लक्षण क्या है?",
+      "opts": [
+        "द्रव्य से असंबद्ध होना",
+        "सभी द्रव्यों का स्थायी गुण",
+        "परिवर्तनशील अवस्था या मोड",
+        "केवल ज्ञान का प्रकार"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "नय को सामान्यतः किस रूप में समझा जाता है?",
+      "opts": [
+        "पूर्ण और सर्वांगपूर्ण ज्ञान",
+        "वस्तु के एक पक्ष से किया गया कथन",
+        "अज्ञान का दूसरा नाम",
+        "केवल आगम-पाठ"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "प्रमाण और नय में मुख्य अंतर क्या है?",
+      "opts": [
+        "नय व्यापक, प्रमाण एकदेशी",
+        "प्रमाण व्यापक, नय अपेक्षाकृत एकदेशी",
+        "दोनों बिल्कुल समान हैं",
+        "प्रमाण केवल शब्दज्ञान है"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "अनेकान्तवाद का सबसे सटीक आशय क्या है?",
+      "opts": [
+        "सभी कथन बिना शर्त सत्य हैं",
+        "वस्तु अनेक धर्मों वाली है और कथन अपेक्षा-सापेक्ष हो सकते हैं",
+        "सत्य का अस्तित्व नहीं है",
+        "केवल आत्मा अनेकान्त है"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "स्याद्वाद में ‘स्यात्’ का मुख्य भाव क्या है?",
+      "opts": [
+        "निश्चित रूप से हर दृष्टि से",
+        "किसी अपेक्षा से",
+        "सिर्फ संदेह",
+        "अज्ञान के कारण"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "जैन दर्शन में जीव का मुख्य लक्षण क्या माना जाता है?",
+      "opts": [
+        "रूप",
+        "गंध",
+        "स्पर्श",
+        "चेतना"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "निम्न में से कौन अजीव द्रव्य नहीं है?",
+      "opts": [
+        "धर्मास्तिकाय",
+        "आकाशास्तिकाय",
+        "पुद्गलास्तिकाय",
+        "जीवास्तिकाय"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "छह द्रव्यों में कौन-सा द्रव्य गतिशील जीव-पुद्गल के लिए गति का माध्यम है?",
+      "opts": [
+        "धर्मास्तिकाय",
+        "अधर्मास्तिकाय",
+        "आकाशास्तिकाय",
+        "काल"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "विश्राम के लिए माध्यम का कार्य किस द्रव्य का है?",
+      "opts": [
+        "धर्मास्तिकाय",
+        "अधर्मास्तिकाय",
+        "पुद्गल",
+        "काल"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "लोक और अलोक का दार्शनिक विभाजन मुख्यतः किस द्रव्य से संबंधित है?",
+      "opts": [
+        "पुद्गल",
+        "काल",
+        "जीव",
+        "आकाश"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "जैन दर्शन में काल की विशिष्टता क्या है?",
+      "opts": [
+        "सभी परंपराओं में उसका अस्तिकाय होना आवश्यक है",
+        "काल केवल पुद्गल का गुण है",
+        "काल का कोई द्रव्यगत आधार नहीं",
+        "काल के परमाणु/समय और व्यवहार-काल का विशिष्ट विवेचन है"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "पुद्गल की विशिष्ट पहचान किन गुणों से होती है?",
+      "opts": [
+        "रूप, रस, गंध और स्पर्श",
+        "ज्ञान और दर्शन",
+        "गति और विश्राम",
+        "केवल चेतना"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "पुद्गल का परमाणु किस संदर्भ में सबसे सूक्ष्म माना जाता है?",
+      "opts": [
+        "ज्ञान की दृष्टि से",
+        "समय की दृष्टि से",
+        "भौतिक विभाजन की दृष्टि से",
+        "नय के अभाव में"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "जैन मोक्षमार्ग में आस्रव का अर्थ क्या है?",
+      "opts": [
+        "कर्म का पूर्ण क्षय",
+        "केवल पुण्य का उदय",
+        "कर्म का आत्मा में प्रवाह/आगमन",
+        "मोक्ष की अंतिम अवस्था"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "कर्मबंध के संदर्भ में ‘बंध’ किसे दर्शाता है?",
+      "opts": [
+        "कर्म का जीव से बंधना",
+        "कर्म का तुरंत नष्ट होना",
+        "ज्ञान का प्रकट होना",
+        "शरीर का जन्म लेना मात्र"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "संवर का मुख्य उद्देश्य क्या है?",
+      "opts": [
+        "नए कर्म के आस्रव को रोकना",
+        "पुराने कर्म का उदय बढ़ाना",
+        "केवल पुण्य बढ़ाना",
+        "शरीर का निर्माण करना"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "निर्जरा किससे संबंधित है?",
+      "opts": [
+        "नए कर्म के आगमन से",
+        "केवल जन्म से",
+        "बंधे कर्म के क्षय/झड़ने से",
+        "केवल ज्ञान से"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "मोक्ष की दार्शनिक स्थिति क्या है?",
+      "opts": [
+        "पुण्यकर्म का अधिकतम संचय",
+        "देवगति में जन्म",
+        "अत्यधिक तप मात्र",
+        "कर्मबंधन से पूर्ण मुक्ति"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "कौन-सा समूह घाती कर्मों का है?",
+      "opts": [
+        "ज्ञानावरणीय, दर्शनावरणीय, मोहनीय, अंतराय",
+        "आयु, नाम, गोत्र, वेदनीय",
+        "आयु, नाम, मोहनीय, अंतराय",
+        "वेदनीय, गोत्र, दर्शनावरणीय, आयु"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "अघाती कर्मों का सही समूह कौन-सा है?",
+      "opts": [
+        "आयु, नाम, गोत्र, वेदनीय",
+        "ज्ञानावरणीय, मोहनीय, अंतराय, आयु",
+        "दर्शनावरणीय, नाम, गोत्र, मोहनीय",
+        "केवल पुण्यकर्म"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "मोहनीय कर्म का विशेष प्रभाव किस पर है?",
+      "opts": [
+        "सम्यक्त्व और चारित्र की शुद्धि पर",
+        "शरीर की लंबाई पर",
+        "केवल आयु पर",
+        "केवल रूप पर"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "ज्ञानावरणीय कर्म किस गुण की अभिव्यक्ति को बाधित करता है?",
+      "opts": [
+        "आयु",
+        "ज्ञान",
+        "गोत्र",
+        "शरीर"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "दर्शनावरणीय कर्म का संबंध किससे है?",
+      "opts": [
+        "शरीर की रचना",
+        "दर्शन की अभिव्यक्ति में आवरण",
+        "आयु का निर्धारण",
+        "भोग-संपदा"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "अंतराय कर्म का संबंध किस प्रकार की बाधा से है?",
+      "opts": [
+        "केवल शरीर की आकृति",
+        "केवल जन्मस्थान",
+        "दान, लाभ, भोग आदि की सामर्थ्य में अवरोध",
+        "केवल ज्ञान की उत्पत्ति"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "कुल कितने गुणस्थान माने जाते हैं?",
+      "opts": [
+        "12",
+        "16",
+        "24",
+        "14"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "चौथा गुणस्थान किससे पहचाना जाता है?",
+      "opts": [
+        "मिथ्यात्व",
+        "प्रमत्तसंयत",
+        "क्षीणकषाय",
+        "अविरत सम्यग्दृष्टि"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "सातवाँ गुणस्थान किस नाम से जाना जाता है?",
+      "opts": [
+        "अपूर्वकरण",
+        "अयोगी केवली",
+        "अप्रमत्तसंयत",
+        "सासादन"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "बारहवें गुणस्थान का प्रमुख नाम क्या है?",
+      "opts": [
+        "क्षीणकषाय",
+        "उपशांतकषाय",
+        "सयोगी केवली",
+        "अविरत सम्यग्दृष्टि"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "तेरहवें गुणस्थान की प्रमुख पहचान क्या है?",
+      "opts": [
+        "सयोगी केवली",
+        "अयोगी केवली",
+        "क्षीणकषाय",
+        "मिथ्यात्व"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "चौदहवाँ गुणस्थान कौन-सा है?",
+      "opts": [
+        "अयोगी केवली",
+        "सयोगी केवली",
+        "उपशांतकषाय",
+        "अपूर्वकरण"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "रत्नत्रय में कौन-सा संयोजन है?",
+      "opts": [
+        "अहिंसा, सत्य, अस्तेय",
+        "ज्ञान, दर्शन, वीर्य",
+        "सम्यग्दर्शन, सम्यग्ज्ञान, सम्यक्चारित्र",
+        "दान, पूजा, स्वाध्याय"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "पाँच महाव्रतों में कौन-सा शामिल नहीं है?",
+      "opts": [
+        "अहिंसा",
+        "सत्य",
+        "अपरिग्रह",
+        "अनेकान्तवाद"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "ईर्या समिति मुख्यतः किससे संबंधित है?",
+      "opts": [
+        "भोजन में सावधानी",
+        "वाणी में सावधानी",
+        "वस्तु रखने में सावधानी",
+        "चलने-फिरने में सावधानी"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "तीन गुप्तियों का सही समूह कौन-सा है?",
+      "opts": [
+        "ज्ञान, दर्शन, चारित्र",
+        "मन, वचन, काय",
+        "दान, पूजा, तप",
+        "अहिंसा, सत्य, अस्तेय"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "दशलक्षण धर्म में उत्तम क्षमा किससे विशेष रूप से संबंधित है?",
+      "opts": [
+        "केवल दान",
+        "केवल मौन",
+        "क्रोध का क्षय/उपशमन और क्षमाभाव",
+        "केवल उपवास"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "चार मुख्य कषायों का सही समूह कौन-सा है?",
+      "opts": [
+        "राग, द्वेष, ज्ञान, दर्शन",
+        "हास्य, शोक, भय, जुगुप्सा",
+        "इंद्रिय, मन, वचन, काय",
+        "क्रोध, मान, माया, लोभ"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "कषायों की तीव्रता के चार पारंपरिक स्तरों में कौन-सा क्रम सही है?",
+      "opts": [
+        "संज्वलन, प्रत्याख्यान, अप्रत्याख्यान, अनन्तानुबंधी",
+        "अनन्तानुबंधी, अप्रत्याख्यान, प्रत्याख्यान, संज्वलन",
+        "अप्रत्याख्यान, संज्वलन, अनन्तानुबंधी, प्रत्याख्यान",
+        "प्रत्याख्यान, अनन्तानुबंधी, संज्वलन, अप्रत्याख्यान"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "समयसार की निश्चय दृष्टि में आत्मा की पहचान मुख्यतः किस रूप में की जाती है?",
+      "opts": [
+        "चेतनस्वरूप ज्ञाता-द्रष्टा",
+        "शरीर और इंद्रियों का समूह",
+        "कर्मपुद्गल का संघात",
+        "सामाजिक पहचान"
+      ],
+      "key": "A"
+    },
+    {
+      "q": "राग-द्वेष को आत्मा का शुद्ध स्वभाव मानना किस दृष्टि से असंगत है?",
+      "opts": [
+        "केवल व्यवहारिक भाषा से",
+        "केवल पुद्गल दृष्टि से",
+        "केवल काल दृष्टि से",
+        "निश्चय दृष्टि से"
+      ],
+      "key": "D"
+    },
+    {
+      "q": "जैन दर्शन में निक्षेप के चार भेद कौन-से हैं?",
+      "opts": [
+        "जीव, अजीव, पुण्य, पाप",
+        "ज्ञान, दर्शन, चारित्र, तप",
+        "नाम, स्थापना, द्रव्य, भाव",
+        "उत्पाद, व्यय, ध्रौव्य, काल"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "जैन ज्ञानमीमांसा में प्रमाण का उद्देश्य क्या है?",
+      "opts": [
+        "केवल एक पर्याय को अलग करना",
+        "वस्तु को यथार्थ रूप से जानना",
+        "केवल शब्दों का निर्माण",
+        "केवल व्यवहार चलाना"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "सम्यग्दर्शन का सबसे महत्वपूर्ण दार्शनिक पक्ष क्या है?",
+      "opts": [
+        "केवल शास्त्र कंठस्थ करना",
+        "केवल बाह्य तप",
+        "तत्त्वों में यथार्थ श्रद्धा",
+        "केवल पूजा करना"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "जैन कर्म-दर्शन में लेश्या मुख्यतः किससे जुड़ी अवधारणा है?",
+      "opts": [
+        "केवल शरीर के भौतिक रंग से",
+        "जीव के मानसिक/भावात्मक परिणामों के रंगरूप से",
+        "केवल देवगति से",
+        "केवल इंद्रियों की संख्या से"
+      ],
+      "key": "B"
+    },
+    {
+      "q": "चार गतियों का सही समूह कौन-सा है?",
+      "opts": [
+        "मनुष्य, सिद्ध, आचार्य, देव",
+        "नरक, पुद्गल, मनुष्य, काल",
+        "नरक, तिर्यंच, मनुष्य, देव",
+        "देव, आकाश, तिर्यंच, सिद्ध"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "सिद्ध जीव की सबसे निर्णायक विशेषता क्या है?",
+      "opts": [
+        "देव शरीर का धारण करना",
+        "अधिकतम पुण्य का संचय",
+        "सर्वकर्मक्षय के बाद संसार से पूर्ण मुक्ति",
+        "अभी शेष मोहनीय कर्म का रहना"
+      ],
+      "key": "C"
+    },
+    {
+      "q": "यदि नए कर्म का आस्रव रुक जाए लेकिन पूर्वबद्ध कर्म शेष हों, तो मोक्ष की दिशा में अगली आवश्यक प्रक्रिया कौन-सी है?",
+      "opts": [
+        "आस्रव",
+        "निर्जरा",
+        "बंध",
+        "मिथ्यात्व"
+      ],
+      "key": "B"
+    }
+  ];
+  // Each question is drawn on the frame image of set (i/10)+1, number (i%10)+1; the
+  // frame artwork supplies the backdrop and banners, the text here is what is shown.
+  var BANK = QUESTIONS.map(function(item, i){
+    return { set: Math.floor(i / 10) + 1, q: (i % 10) + 1, text: item.q, opts: item.opts, key: item.key };
   });
   var DECK_SIZE = 10;
   var LADDER = {1:10,2:25,3:50,4:100,5:250,6:500,7:1000,8:2500,9:5000,10:10000};
@@ -535,6 +1078,10 @@
     hit5050: document.getElementById('hit5050'),
     xAudience: document.getElementById('xAudience'),
     x5050: document.getElementById('x5050'),
+    qVisual: document.getElementById('qVisual'),
+    qText: document.getElementById('qText'),
+    reveal: document.getElementById('reveal'),
+    revealText: document.getElementById('revealText'),
     hitTime: document.getElementById('hitTime'),
     timerBadge: document.getElementById('timerBadge'),
     timerBarWrap: document.getElementById('timerBarWrap'),
@@ -558,6 +1105,8 @@
   };
 
   var hitLetter = {A: el.hitA, B: el.hitB, C: el.hitC, D: el.hitD};
+  var optVisual = {A: document.querySelector('.opt-visual[data-l="A"]'), B: document.querySelector('.opt-visual[data-l="B"]'), C: document.querySelector('.opt-visual[data-l="C"]'), D: document.querySelector('.opt-visual[data-l="D"]')};
+  var optText = {A: document.getElementById('tA'), B: document.getElementById('tB'), C: document.getElementById('tC'), D: document.getElementById('tD')};
   var elimLetter = {A: el.elimA, B: el.elimB, C: el.elimC, D: el.elimD};
 
   var state = {
@@ -672,7 +1221,48 @@
   function clearOptionTints(){
     ['A','B','C','D'].forEach(function(l){
       hitLetter[l].classList.remove('tint-correct','tint-wrong');
+      optVisual[l].classList.remove('tint-correct','tint-wrong');
     });
+  }
+
+  // Shrinks a text node's font until its text fits inside its shape (phones need this)
+  function fitText(node){
+    node.style.fontSize = '';
+    var size = parseFloat(getComputedStyle(node).fontSize);
+    while(size > 8 && (node.scrollHeight > node.clientHeight + 1 || node.scrollWidth > node.clientWidth + 1)){
+      size -= 0.5;
+      node.style.fontSize = size + 'px';
+    }
+  }
+
+  function fitAllText(){
+    if(el.qVisual.hidden) return;
+    fitText(el.qText);
+    ['A','B','C','D'].forEach(function(l){ fitText(optText[l]); });
+  }
+
+  function showQuestion(){
+    var c = currentQ();
+    el.qVisual.hidden = false;
+    el.qText.textContent = c.text;
+    ['A','B','C','D'].forEach(function(l, i){
+      optText[l].textContent = c.opts[i];
+      optVisual[l].classList.remove('tint-correct','tint-wrong');
+    });
+    el.reveal.hidden = true;
+    fitAllText();
+  }
+
+  window.addEventListener('resize', fitAllText);
+
+  function showReveal(letter){
+    el.revealText.textContent = '(' + letter + ') – ' + currentQ().opts['ABCD'.indexOf(letter)];
+    el.reveal.hidden = false;
+  }
+
+  function hideQuestionUI(){
+    el.qVisual.hidden = true;
+    el.reveal.hidden = true;
   }
 
   function renderIdle(){
@@ -683,6 +1273,7 @@
     resetEliminationUI();
     clearOptionTints();
     setBg(frameFor('idle'));
+    showQuestion();
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = false; hitLetter[l].disabled = false; });
     el.hit5050.hidden = false; el.hit5050.disabled = state.fiftyUsed;
     el.hitAudience.hidden = false; el.hitAudience.disabled = state.audienceUsed;
@@ -720,12 +1311,15 @@
     state.lastCorrect = isCorrect;
 
     hitLetter[correctLetter].classList.add('tint-correct');
+    optVisual[correctLetter].classList.add('tint-correct');
     if(letter && !isCorrect){
       hitLetter[letter].classList.add('tint-wrong');
+      optVisual[letter].classList.add('tint-wrong');
     }
 
     if(isCorrect){
       setBg(frameFor('correct'));
+      showReveal(correctLetter);
       try{ el.correctSound.currentTime = 0; el.correctSound.play().catch(function(){}); }catch(e){}
       if(state.q === 5){
         state.padavReached = LADDER[5];
@@ -792,6 +1386,7 @@
     state.screen = 'finished';
     clearTimer();
     setBg(frameFor('correct'));
+    showReveal(currentQ().key);
     el.metaRow.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
     el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
@@ -814,6 +1409,7 @@
     clearTimer();
     hideAllPanels();
     setBg('images/title.jpg');
+    hideQuestionUI();
     el.metaRow.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
     el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
@@ -849,6 +1445,7 @@
   function renderSplash(){
     state.screen = 'splash';
     setBg('images/title.jpg');
+    hideQuestionUI();
     hideAllPanels();
     el.bgImg.classList.add('splash-zoom');
     playIntroAnimation();
@@ -874,6 +1471,7 @@
   function renderRules(){
     state.screen = 'rules';
     setBg('images/title.jpg');
+    hideQuestionUI();
     el.introDots.hidden = true;
     el.introSpark.hidden = true;
     el.bgImg.classList.remove('splash-zoom');
