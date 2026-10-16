@@ -160,13 +160,13 @@
 
   .lifeline-hit{position:absolute; cursor:pointer; background:transparent; border:0; padding:0}
   .lifeline-hit:disabled{cursor:default}
-  .time-lifeline{
-    display:flex; align-items:center; justify-content:center; box-sizing:border-box;
-    border:2px solid #ffd447; border-radius:999px; background:rgba(20,8,40,.6);
-    color:#ffd447; font:900 clamp(11px,1.8vw,16px) Cinzel,serif; letter-spacing:.5px;
-    box-shadow:0 0 12px rgba(255,212,71,.35);
+  .time-plus{
+    background:rgba(13,2,32,.8); border:1px solid var(--gold);
+    color:var(--gold); font-weight:700; font-family:'Cinzel',serif;
+    padding:2px 12px; border-radius:999px; font-size:clamp(12px,1.8vw,16px);
+    cursor:pointer;
   }
-  .time-lifeline:disabled{opacity:.35; box-shadow:none}
+  .time-plus:disabled{opacity:.35; cursor:default}
   .lifeline-used-x{
     position:absolute; color:var(--wrong); font-weight:900;
     font-size:clamp(20px,3.4vw,34px);
@@ -182,8 +182,11 @@
   .timerbar{height:100%; width:100%; background:linear-gradient(90deg,var(--gold),var(--correct)); transition:width 1s linear}
   .timerbar.urgent{background:linear-gradient(90deg,var(--wrong),var(--gold))}
 
-  .timer-badge{
+  .timer-cluster{
     position:absolute; top:0.8%; left:5.2%;
+    display:flex; align-items:center; gap:8px;
+  }
+  .timer-badge{
     background:rgba(13,2,32,.8); border:1px solid var(--gold);
     color:var(--gold); font-weight:700; font-family:'Cinzel',serif;
     padding:2px 12px; border-radius:999px; font-size:clamp(12px,1.8vw,16px);
@@ -372,10 +375,11 @@
     <button class="lifeline-hit" id="hit5050" style="left:4.94%;top:43.737%;width:11.998%;height:10.79%" aria-label="50:50" hidden></button>
     <div class="lifeline-used-x" id="xAudience" style="left:9.5%;top:18%" hidden>✕</div>
     <div class="lifeline-used-x" id="x5050" style="left:9.3%;top:46.5%" hidden>✕</div>
-    <button class="lifeline-hit time-lifeline" id="hitTime" style="left:4.94%;top:57%;width:11.998%;height:10.79%" aria-label="Add 30 seconds" hidden>+30 sec</button>
-    <div class="lifeline-used-x" id="xTime" style="left:9.3%;top:59.8%" hidden>✕</div>
 
-    <div class="timer-badge" id="timerBadge" hidden>30</div>
+    <div class="timer-cluster">
+      <div class="timer-badge" id="timerBadge" hidden>30</div>
+      <button class="time-plus" id="hitTime" aria-label="Add 30 seconds" hidden>+30 sec</button>
+    </div>
     <div class="timerbar-wrap" id="timerBarWrap" hidden><div class="timerbar" id="timerBar"></div></div>
 
     <div class="toast" id="toast"></div>
@@ -392,7 +396,7 @@
           <li>Each question has 4 options. Tap one option to lock in your answer.</li>
           <li>⏱️ Every question has a <b>30-second timer</b>, with the deck's own ticking sting.</li>
           <li><b>50:50</b> removes two incorrect options and restarts the timer — usable <b>once per game</b>.</li>
-          <li><b>+30 sec</b> adds 30 seconds to the clock — usable <b>once per game</b>.</li>
+          <li><b>+30 sec</b> (top left) adds 30 seconds to the clock — available on <b>every question</b>, once per question.</li>
           <li><b>Audience Poll</b> opens a live poll for the host to use with the audience — usable <b>once per game</b>.</li>
           <li>❌ One wrong answer or the timer reaching zero ends the game — though from <b>Padav 1</b> onward you keep the Punya you've secured.</li>
           <li>🏆 Answer all 10 questions correctly to become the <b>Punya Vijeta</b>!</li>
@@ -532,7 +536,6 @@
     xAudience: document.getElementById('xAudience'),
     x5050: document.getElementById('x5050'),
     hitTime: document.getElementById('hitTime'),
-    xTime: document.getElementById('xTime'),
     timerBadge: document.getElementById('timerBadge'),
     timerBarWrap: document.getElementById('timerBarWrap'),
     timerBar: document.getElementById('timerBar'),
@@ -674,6 +677,7 @@
 
   function renderIdle(){
     state.screen = 'idle';
+    state.timeUsed = false; // +30 sec is available again on every question
     hideAllPanels();
     state.answered = false;
     resetEliminationUI();
@@ -684,8 +688,7 @@
     el.hitAudience.hidden = false; el.hitAudience.disabled = state.audienceUsed;
     el.xAudience.hidden = !state.audienceUsed;
     el.x5050.hidden = !state.fiftyUsed;
-    el.hitTime.hidden = false; el.hitTime.disabled = state.timeUsed;
-    el.xTime.hidden = !state.timeUsed;
+    el.hitTime.hidden = !TIMED[state.q]; el.hitTime.disabled = false;
     el.metaRow.hidden = false;
     el.metaQ.textContent = state.q;
     el.metaPrize.textContent = fmtMoney(LADDER[state.q]);
@@ -709,7 +712,7 @@
     state.answered = true;
     clearTimer();
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].disabled = true; });
-    el.hit5050.disabled = true; el.hitAudience.disabled = true; el.hitTime.disabled = true;
+    el.hit5050.disabled = true; el.hitAudience.disabled = true; el.hitTime.hidden = true;
     el.timerBadge.hidden = true; el.timerBarWrap.hidden = true;
 
     var correctLetter = currentQ().key;
@@ -792,7 +795,7 @@
     el.metaRow.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
     el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
-    el.xAudience.hidden = true; el.x5050.hidden = true; el.xTime.hidden = true;
+    el.xAudience.hidden = true; el.x5050.hidden = true;
     el.restartLink.hidden = false;
     el.controls.innerHTML = '';
     var h = document.createElement('div');
@@ -814,7 +817,7 @@
     el.metaRow.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
     el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
-    el.xAudience.hidden = true; el.x5050.hidden = true; el.xTime.hidden = true;
+    el.xAudience.hidden = true; el.x5050.hidden = true;
     el.restartLink.hidden = false;
     el.controls.innerHTML = '';
     var h = document.createElement('div');
@@ -853,7 +856,7 @@
     el.restartLink.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
     el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
-    el.xAudience.hidden = true; el.x5050.hidden = true; el.xTime.hidden = true;
+    el.xAudience.hidden = true; el.x5050.hidden = true;
     el.controls.innerHTML = '';
     var btn = document.createElement('button');
     btn.className = 'cta primary';
@@ -880,7 +883,7 @@
     el.restartLink.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
     el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
-    el.xAudience.hidden = true; el.x5050.hidden = true; el.xTime.hidden = true;
+    el.xAudience.hidden = true; el.x5050.hidden = true;
     el.rulesPanel.hidden = false;
     el.controls.innerHTML = '';
     try{ el.howToPlaySound.volume = 0.5; el.howToPlaySound.currentTime = 0; el.howToPlaySound.play().catch(function(){}); }catch(e){}
@@ -964,7 +967,6 @@
     if(state.answered || state.timeUsed || !TIMED[state.q]) return;
     state.timeUsed = true;
     el.hitTime.disabled = true;
-    el.xTime.hidden = false;
     state.timerRemaining += 30;
     updateTimerUI();
     showToast('+30 seconds added.');
