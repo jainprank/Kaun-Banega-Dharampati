@@ -715,7 +715,13 @@
   }
 
   function renderWrongControls(){
+    state.screen = 'gameover';
+    clearTimer();
     el.controls.innerHTML = '';
+    var over = document.createElement('div');
+    over.style.cssText = 'font-family:Cinzel,serif;color:var(--wrong);font-weight:900;font-size:clamp(18px,3.4vw,26px);text-align:center;text-shadow:0 2px 14px rgba(255,93,115,.5);width:100%';
+    over.textContent = '❌ Game Over';
+    el.controls.appendChild(over);
     if(state.padavReached > 0){
       var msg = document.createElement('div');
       msg.style.cssText = 'font-family:Cinzel,serif;color:#ffd447;font-weight:700;font-size:clamp(13px,2.2vw,16px);text-align:center;width:100%';
@@ -723,10 +729,22 @@
       el.controls.appendChild(msg);
     }
     var btn = document.createElement('button');
-    btn.className = 'cta danger';
-    btn.textContent = 'Try Again (restart from Q1)';
-    btn.onclick = restartQuiz;
+    btn.className = 'cta primary';
+    btn.textContent = 'Restart Game';
+    btn.onclick = restartSameSet;
     el.controls.appendChild(btn);
+    // keep the restart option on screen when the game ends
+    btn.scrollIntoView({ block: 'nearest' });
+  }
+
+  // Restart the set already being played from Question 1, without replaying the intro
+  function restartSameSet(){
+    state.q = 1;
+    state.audienceUsed = false;
+    state.fiftyUsed = false;
+    state.padavReached = 0;
+    hideAllPanels();
+    renderIdle();
   }
 
   function restartQuiz(){
