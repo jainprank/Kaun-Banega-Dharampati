@@ -160,6 +160,13 @@
 
   .lifeline-hit{position:absolute; cursor:pointer; background:transparent; border:0; padding:0}
   .lifeline-hit:disabled{cursor:default}
+  .time-lifeline{
+    display:flex; align-items:center; justify-content:center; box-sizing:border-box;
+    border:2px solid #ffd447; border-radius:999px; background:rgba(20,8,40,.6);
+    color:#ffd447; font:900 clamp(11px,1.8vw,16px) Cinzel,serif; letter-spacing:.5px;
+    box-shadow:0 0 12px rgba(255,212,71,.35);
+  }
+  .time-lifeline:disabled{opacity:.35; box-shadow:none}
   .lifeline-used-x{
     position:absolute; color:var(--wrong); font-weight:900;
     font-size:clamp(20px,3.4vw,34px);
@@ -365,6 +372,8 @@
     <button class="lifeline-hit" id="hit5050" style="left:4.94%;top:43.737%;width:11.998%;height:10.79%" aria-label="50:50" hidden></button>
     <div class="lifeline-used-x" id="xAudience" style="left:9.5%;top:18%" hidden>✕</div>
     <div class="lifeline-used-x" id="x5050" style="left:9.3%;top:46.5%" hidden>✕</div>
+    <button class="lifeline-hit time-lifeline" id="hitTime" style="left:4.94%;top:57%;width:11.998%;height:10.79%" aria-label="Add 30 seconds" hidden>+30 sec</button>
+    <div class="lifeline-used-x" id="xTime" style="left:9.3%;top:59.8%" hidden>✕</div>
 
     <div class="timer-badge" id="timerBadge" hidden>30</div>
     <div class="timerbar-wrap" id="timerBarWrap" hidden><div class="timerbar" id="timerBar"></div></div>
@@ -375,7 +384,7 @@
       <div class="rules-card">
         <h2>How to Play</h2>
         <ul>
-          <li><b>10 questions</b> on Jain philosophy, as you climb the Punya Ladder from <b>10</b> to <b>10,000 Punya</b>.</li>
+          <li><b>10 questions</b>, dealt at random from the Jain philosophy question bank, as you climb the Punya Ladder from <b>10</b> to <b>10,000 Punya</b>.</li>
           <li>There are <b>2 Padav (Milestones)</b>:</li>
           <li style="padding-left:2.4em">🪜 <b>Padav 1 — 5th Question:</b> you must reach Question 5. This is mandatory to secure your minimum Punya.</li>
           <li style="padding-left:2.4em">🪜 <b>Padav 2 — 10th Question:</b> reach the final question and answer all 10 correctly to become the <b>Punya Vijeta</b>.</li>
@@ -383,17 +392,11 @@
           <li>Each question has 4 options. Tap one option to lock in your answer.</li>
           <li>⏱️ Every question has a <b>30-second timer</b>, with the deck's own ticking sting.</li>
           <li><b>50:50</b> removes two incorrect options and restarts the timer — usable <b>once per game</b>.</li>
+          <li><b>+30 sec</b> adds 30 seconds to the clock — usable <b>once per game</b>.</li>
           <li><b>Audience Poll</b> opens a live poll for the host to use with the audience — usable <b>once per game</b>.</li>
           <li>❌ One wrong answer or the timer reaching zero ends the game — though from <b>Padav 1</b> onward you keep the Punya you've secured.</li>
           <li>🏆 Answer all 10 questions correctly to become the <b>Punya Vijeta</b>!</li>
         </ul>
-      </div>
-    </div>
-
-    <div class="rules-panel" id="setPanel" hidden>
-      <div class="rules-card">
-        <h2>Choose Your Set</h2>
-        <div class="set-grid" id="setGrid"></div>
       </div>
     </div>
 
@@ -422,14 +425,22 @@
 (function(){
   "use strict";
 
+  // Question bank: each set holds the answer keys for its 10 questions, and the
+  // images live in images/set<N>/ (q1..q10 x idle/correct/wrong). Every game deals
+  // DECK_SIZE questions at random from all sets together.
+  // To add questions, add a set here and its image folder.
   var SETS = {
-    1: {label:"Set 1", range:"Q1–Q10",  correct:["A","B","C","D","A","B","C","D","A","B"]},
-    2: {label:"Set 2", range:"Q12–Q21", correct:["B","D","C","D","B","A","D","C","A","B"]},
-    3: {label:"Set 3", range:"Q22–Q31", correct:["B","C","D","A","B","C","D","A","B","C"]},
-    4: {label:"Set 4", range:"Q32–Q41", correct:["C","D","A","B","C","D","A","B","C","D"]},
-    5: {label:"Set 5", range:"Q42–Q50", correct:["D","A","B","C","D","B","A","D","B","C"]}
+    1: {correct:["A","B","C","D","A","B","C","D","A","B"]},
+    2: {correct:["B","D","C","D","B","A","D","C","A","B"]},
+    3: {correct:["B","C","D","A","B","C","D","A","B","C"]},
+    4: {correct:["C","D","A","B","C","D","A","B","C","D"]},
+    5: {correct:["D","A","B","C","D","B","A","D","B","C"]}
   };
-  var CORRECT = SETS[1].correct; // swapped when a set is chosen
+  var BANK = [];
+  Object.keys(SETS).forEach(function(s){
+    SETS[s].correct.forEach(function(key, i){ BANK.push({ set: parseInt(s, 10), q: i + 1, key: key }); });
+  });
+  var DECK_SIZE = 10;
   var LADDER = {1:10,2:25,3:50,4:100,5:250,6:500,7:1000,8:2500,9:5000,10:10000};
   var TIMED = {1:true,2:true,3:true,4:true,5:true,6:true,7:true,8:true,9:true,10:true};
   var TIMER_SECONDS = 30;
@@ -520,13 +531,13 @@
     hit5050: document.getElementById('hit5050'),
     xAudience: document.getElementById('xAudience'),
     x5050: document.getElementById('x5050'),
+    hitTime: document.getElementById('hitTime'),
+    xTime: document.getElementById('xTime'),
     timerBadge: document.getElementById('timerBadge'),
     timerBarWrap: document.getElementById('timerBarWrap'),
     timerBar: document.getElementById('timerBar'),
     toast: document.getElementById('toast'),
     rulesPanel: document.getElementById('rulesPanel'),
-    setPanel: document.getElementById('setPanel'),
-    setGrid: document.getElementById('setGrid'),
     pollPanel: document.getElementById('pollPanel'),
     pollCard: document.getElementById('pollCard'),
     introDots: document.getElementById('introDots'),
@@ -549,10 +560,11 @@
   var state = {
     screen: 'splash',       // splash | idle | answered | finished
     q: 1,
-    set: 1,
+    deck: [],
     answered: false,
     lastCorrect: null,
     fiftyUsed: false,
+    timeUsed: false,
     audienceUsed: false,
     padavReached: 0,
     eliminated: [],
@@ -560,17 +572,25 @@
     timerHandle: null,
   };
 
-  function qImg(name){ return 'images/set' + state.set + '/' + name; }
+  function frameSrc(c, kind){ return 'images/set' + c.set + '/q' + c.q + '_' + kind + '.jpg'; }
+  function currentQ(){ return state.deck[state.q - 1]; }
+  function frameFor(kind){ return frameSrc(currentQ(), kind); }
 
-  function chooseSet(n){
-    state.set = n;
-    CORRECT = SETS[n].correct;
-    state.q = 1; state.fiftyUsed = false; state.audienceUsed = false; state.padavReached = 0;
-    var eb = document.getElementById('eyebrow');
-    if(eb) eb.textContent = 'Jain Advanced Quiz · ' + SETS[n].label + ' · ' + SETS[n].range;
-    // warm the cache for this set's frames so reveals are instant
-    ['idle','correct','wrong'].forEach(function(k){
-      for(var i = 1; i <= 10; i++){ var im = new Image(); im.src = qImg('q' + i + '_' + k + '.jpg'); }
+  function shuffle(list){
+    var a = list.slice();
+    for(var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function startGame(){
+    state.deck = shuffle(BANK).slice(0, DECK_SIZE);
+    state.q = 1; state.fiftyUsed = false; state.audienceUsed = false; state.timeUsed = false; state.padavReached = 0;
+    // warm the cache for this game's frames so reveals are instant
+    state.deck.forEach(function(c){
+      ['idle','correct','wrong'].forEach(function(k){ var im = new Image(); im.src = frameSrc(c, k); });
     });
     hideAllPanels();
     renderIdle();
@@ -614,7 +634,7 @@
 
   function updateTimerUI(){
     el.timerBadge.textContent = Math.max(state.timerRemaining,0);
-    var pct = Math.max(state.timerRemaining,0) / TIMER_SECONDS * 100;
+    var pct = Math.min(100, Math.max(state.timerRemaining,0) / TIMER_SECONDS * 100);
     el.timerBar.style.width = pct + '%';
     el.timerBar.classList.toggle('urgent', state.timerRemaining <= 10);
   }
@@ -643,12 +663,14 @@
     state.answered = false;
     resetEliminationUI();
     clearOptionTints();
-    setBg(qImg('q' + state.q + '_idle.jpg'));
+    setBg(frameFor('idle'));
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = false; hitLetter[l].disabled = false; });
     el.hit5050.hidden = false; el.hit5050.disabled = state.fiftyUsed;
     el.hitAudience.hidden = false; el.hitAudience.disabled = state.audienceUsed;
     el.xAudience.hidden = !state.audienceUsed;
     el.x5050.hidden = !state.fiftyUsed;
+    el.hitTime.hidden = false; el.hitTime.disabled = state.timeUsed;
+    el.xTime.hidden = !state.timeUsed;
     el.metaRow.hidden = false;
     el.metaQ.textContent = state.q;
     el.metaPrize.textContent = fmtMoney(LADDER[state.q]);
@@ -672,10 +694,10 @@
     state.answered = true;
     clearTimer();
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].disabled = true; });
-    el.hit5050.disabled = true; el.hitAudience.disabled = true;
+    el.hit5050.disabled = true; el.hitAudience.disabled = true; el.hitTime.disabled = true;
     el.timerBadge.hidden = true; el.timerBarWrap.hidden = true;
 
-    var correctLetter = CORRECT[state.q - 1];
+    var correctLetter = currentQ().key;
     var isCorrect = (letter === correctLetter);
     state.lastCorrect = isCorrect;
 
@@ -685,7 +707,7 @@
     }
 
     if(isCorrect){
-      setBg(qImg('q' + state.q + '_correct.jpg'));
+      setBg(frameFor('correct'));
       try{ el.correctSound.currentTime = 0; el.correctSound.play().catch(function(){}); }catch(e){}
       if(state.q === 5){
         state.padavReached = LADDER[5];
@@ -694,7 +716,7 @@
         renderCorrectControls();
       }
     } else {
-      setBg(qImg('q' + state.q + '_wrong.jpg'));
+      setBg(frameFor('wrong'));
       try{ el.ding.currentTime = 0; el.ding.play().catch(function(){}); }catch(e){}
       renderWrongControls();
     }
@@ -731,38 +753,31 @@
     var btn = document.createElement('button');
     btn.className = 'cta primary';
     btn.textContent = 'Restart Game';
-    btn.onclick = restartSameSet;
+    btn.onclick = restartQuiz;
     el.controls.appendChild(btn);
     // keep the restart option on screen when the game ends
     btn.scrollIntoView({ block: 'nearest' });
   }
 
-  // Restart the set already being played from Question 1, without replaying the intro
-  function restartSameSet(){
-    state.q = 1;
-    state.audienceUsed = false;
-    state.fiftyUsed = false;
-    state.padavReached = 0;
-    hideAllPanels();
-    renderIdle();
-  }
-
+  // Every restart (Game Over, Play Again, top link) lands on the rules page
   function restartQuiz(){
     state.q = 1;
     state.audienceUsed = false;
     state.fiftyUsed = false;
+    state.timeUsed = false;
     state.padavReached = 0;
-    renderSplash();
+    hideAllPanels();
+    renderRules();
   }
 
   function renderFinished(){
     state.screen = 'finished';
     clearTimer();
-    setBg(qImg('q10_correct.jpg'));
+    setBg(frameFor('correct'));
     el.metaRow.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
-    el.hit5050.hidden = true; el.hitAudience.hidden = true;
-    el.xAudience.hidden = true; el.x5050.hidden = true;
+    el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
+    el.xAudience.hidden = true; el.x5050.hidden = true; el.xTime.hidden = true;
     el.restartLink.hidden = false;
     el.controls.innerHTML = '';
     var h = document.createElement('div');
@@ -783,8 +798,8 @@
     setBg('images/title.jpg');
     el.metaRow.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
-    el.hit5050.hidden = true; el.hitAudience.hidden = true;
-    el.xAudience.hidden = true; el.x5050.hidden = true;
+    el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
+    el.xAudience.hidden = true; el.x5050.hidden = true; el.xTime.hidden = true;
     el.restartLink.hidden = false;
     el.controls.innerHTML = '';
     var h = document.createElement('div');
@@ -800,7 +815,6 @@
 
   function hideAllPanels(){
     el.rulesPanel.hidden = true;
-    el.setPanel.hidden = true;
     el.pollPanel.hidden = true;
     el.introDots.hidden = true;
     el.introSpark.hidden = true;
@@ -823,8 +837,8 @@
     el.metaRow.hidden = true;
     el.restartLink.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
-    el.hit5050.hidden = true; el.hitAudience.hidden = true;
-    el.xAudience.hidden = true; el.x5050.hidden = true;
+    el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
+    el.xAudience.hidden = true; el.x5050.hidden = true; el.xTime.hidden = true;
     el.controls.innerHTML = '';
     var btn = document.createElement('button');
     btn.className = 'cta primary';
@@ -850,8 +864,8 @@
     el.metaRow.hidden = true;
     el.restartLink.hidden = true;
     ['A','B','C','D'].forEach(function(l){ hitLetter[l].hidden = true; });
-    el.hit5050.hidden = true; el.hitAudience.hidden = true;
-    el.xAudience.hidden = true; el.x5050.hidden = true;
+    el.hit5050.hidden = true; el.hitAudience.hidden = true; el.hitTime.hidden = true;
+    el.xAudience.hidden = true; el.x5050.hidden = true; el.xTime.hidden = true;
     el.rulesPanel.hidden = false;
     el.controls.innerHTML = '';
     try{ el.howToPlaySound.volume = 0.5; el.howToPlaySound.currentTime = 0; el.howToPlaySound.play().catch(function(){}); }catch(e){}
@@ -865,31 +879,9 @@
     btn.textContent = 'Start Quiz →';
     btn.onclick = function(){
       stopHowToPlayAudio();
-      renderSetPicker();
+      startGame();
     };
     el.controls.appendChild(btn);
-  }
-
-  function renderSetPicker(){
-    state.screen = 'setpicker';
-    hideAllPanels();
-    setBg('images/title.jpg');
-    el.metaRow.hidden = true; el.restartLink.hidden = true;
-    el.setGrid.innerHTML = '';
-    Object.keys(SETS).forEach(function(k){
-      var b = document.createElement('button');
-      b.className = 'set-btn';
-      b.innerHTML = '<b>' + SETS[k].label + '</b><span>' + SETS[k].range + ' · 10 questions</span>';
-      b.onclick = function(){ chooseSet(parseInt(k, 10)); };
-      el.setGrid.appendChild(b);
-    });
-    el.setPanel.hidden = false;
-    el.controls.innerHTML = '';
-    var back = document.createElement('button');
-    back.className = 'cta ghost';
-    back.textContent = '‹ Back';
-    back.onclick = renderRules;
-    el.controls.appendChild(back);
   }
 
   ['A','B','C','D'].forEach(function(letter){
@@ -904,7 +896,7 @@
     state.fiftyUsed = true;
     el.hit5050.disabled = true;
     el.x5050.hidden = false;
-    var correct = CORRECT[state.q - 1];
+    var correct = currentQ().key;
     var wrongOnes = ['A','B','C','D'].filter(function(l){ return l !== correct; });
     // shuffle and take 2 to eliminate
     for(var i = wrongOnes.length - 1; i > 0; i--){
@@ -951,6 +943,15 @@
     el.hitAudience.disabled = true;
     el.xAudience.hidden = false;
     showAudiencePoll();
+  });
+  el.hitTime.addEventListener('click', function(){
+    if(state.answered || state.timeUsed || !TIMED[state.q]) return;
+    state.timeUsed = true;
+    el.hitTime.disabled = true;
+    el.xTime.hidden = false;
+    state.timerRemaining += 30;
+    updateTimerUI();
+    showToast('+30 seconds added.');
   });
   el.restartLink.addEventListener('click', restartQuiz);
 
