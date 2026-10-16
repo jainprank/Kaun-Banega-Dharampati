@@ -6,7 +6,7 @@ A KBC-style quiz on Jain philosophy. Climb the **Punya Ladder** from 10 to 10,00
 Open `index.html` in a browser, or host the folder with GitHub Pages. No build step; the only external dependency is Google Fonts.
 
 1. Tap **How to Play →** (how-to-play music loops), then **Start Quiz →**
-2. 30-second timer on every question; lifelines **50:50**, **+30 sec** and **Audience Poll** (run live by the host), each once per game
+2. 30-second timer on every question. **+30 sec** (top left) adds 30 seconds, once per question. Lifelines **50:50** and **Audience Poll** (run live by the host) are each once per game
 3. Clear Question 5 to secure **Padav 1** (250 Punya). A wrong answer after that keeps it, and you may quit at any later question to take it home
 4. Answer all 10 correctly to become **Punya Vijeta**
 5. A wrong answer or timeout ends the game; **Restart** returns to the rules page
