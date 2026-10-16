@@ -621,7 +621,14 @@
     el.timerBadge.hidden = false;
     el.timerBarWrap.hidden = false;
     updateTimerUI();
-    try{ el.tick.currentTime = 0; el.tick.play().catch(function(){}); }catch(e){}
+    try{ el.tick.currentTime = 0; }catch(e){}
+    runTimer();
+  }
+
+  // Counts down from state.timerRemaining; used by startTimer and resumeTimer
+  function runTimer(){
+    clearTimer();
+    try{ el.tick.play().catch(function(){}); }catch(e){}
     state.timerHandle = setInterval(function(){
       state.timerRemaining -= 1;
       updateTimerUI();
@@ -630,6 +637,14 @@
         if(!state.answered) lockAnswer(null); // time's up -> counts as wrong
       }
     }, 1000);
+  }
+
+  // Stops the clock and tick while the audience poll is open; keeps the remaining seconds
+  function pauseTimer(){ clearTimer(); }
+
+  function resumeTimer(){
+    if(state.answered || !TIMED[state.q] || state.timerRemaining <= 0) return;
+    runTimer();
   }
 
   function updateTimerUI(){
@@ -928,12 +943,13 @@
   }
 
   function showAudiencePoll(){
+    pauseTimer();
     el.pollPanel.hidden = false;
     el.pollCard.innerHTML = '<div class="poll-spinner"></div><div class="poll-waiting-text">Waiting for Audience Poll<span class="dots"></span></div>';
     var btn = document.createElement('button');
     btn.className = 'cta ghost';
     btn.textContent = 'Close';
-    btn.onclick = function(){ el.pollPanel.hidden = true; };
+    btn.onclick = function(){ el.pollPanel.hidden = true; resumeTimer(); };
     el.pollCard.appendChild(btn);
   }
 
